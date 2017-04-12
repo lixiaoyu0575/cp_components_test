@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+    <title>Draggable Circle Packing</title>
+    <style>
+
+        svg circle {
+            cursor: move;
+            stroke: #000;
+            stroke-width: 0px;
+            fill: #827d92;
+        }
+
+        .fixed {
+            fill: #f00;
+            stroke-width: 5px;
+            stroke: #f00;
+        }
+
+        button {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+        }
+
+    </style>
+</head>
+
+<body>
+<a href="/">back</a>
+<button style="top: 50px" onclick="reset()">Reset</button>
+<button style="top: 100px" onclick="addNode()">Add node</button>
+<!--<button style="top: 100px" onclick="delNodes()">Delete nodes</button>-->
+<script src="./libs/jquery.min.js"></script>
+<script src="./libs/d3.v3.min.js"></script>
+<script>
+
+    var width = 900;
+    var height = 500;
+
+    var svg = d3.select("body").append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+//    var nodes = d3.range(20).map(function (d,i) { return {radius: Math.random() * 50 + 20, id: i + 1}; });
+//    console.log(JSON.stringify(nodes));
+    var nodes = [{"radius":53.32617499186609,"id":1},{"radius":64.84728247370347,"id":2},{"radius":57.711116628876255,"id":3},{"radius":51.68448051769095,"id":4},{"radius":44.43690375408485,"id":5},{"radius":28.24037000122536,"id":6},{"radius":69.80625687794407,"id":7},{"radius":31.17397903167372,"id":8},{"radius":28.806758988671714,"id":9},{"radius":40.098682831558634,"id":10},{"radius":20.65836484124755,"id":11},{"radius":52.89208982548851,"id":12},{"radius":26.74078177789924,"id":13},{"radius":52.81542169082984,"id":14},{"radius":67.4636603513773,"id":15},{"radius":55.05302273514476,"id":16},{"radius":54.72590107115092,"id":17},{"radius":57.282760475128796,"id":18},{"radius":33.865004776784474,"id":19},{"radius":28.901305727993403,"id":20}];
+    //    var nodes = d3.range(200).map(function () { return {radius: Math.random() * 10 + 8}; });
+    var nodesCopy = $.extend(true, [], nodes);
+    var color = d3.scale.category10();
+
+    function dblclick(d) {
+//        console.log("dbclick");
+//        console.log(d);
+//        console.log(d3.select(this).style("stroke"));
+        d3.select(this).classed("fixed", d.fixed = false);
+    }
+
+    function dragstart(d) {
+//        console.log(d)
+        d3.select(this).classed("fixed", d.fixed = true);
+    }
+
+    function collide(node) {
+        var r = node.radius + 16;
+        var nx1 = node.x - r;
+        var nx2 = node.x + r;
+        var ny1 = node.y - r;
+        var ny2 = node.y + r;
+        return function (quad, x1, y1, x2, y2) {
+            if (quad.point && (quad.point !== node)) {
+                var x = node.x - quad.point.x;
+                var y = node.y - quad.point.y;
+                var l = Math.sqrt(x * x + y * y);
+                var npr = node.radius + quad.point.radius;
+                if (l < npr) {
+                    l = (l - npr) / l * 0.5;
+                    x *= l;
+                    node.x -= x;
+                    y *= l;
+                    node.y -= y;
+                    quad.point.x += x;
+                    quad.point.y += y;
+                }
+            }
+            return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
+        };
+    }
+var packLaout;
+    function packup() {
+        var pack = d3.layout.pack()
+            .sort(null)
+            .size([width, height])
+            .padding(0)
+            .value(function (d) { return d.radius; });
+        packLaout = pack;
+
+        svg.selectAll(".node")
+            .data(pack.nodes({"children": nodes})
+                .filter(function (d) { return !d.children; }))
+            .enter().append("circle")
+            .attr("r", function (d) { return d.radius; })
+            .attr("cx", function (d) { return d.x; })
+            .attr("cy", function (d) { return d.y; })
+            .style("fill", function (d, i) {
+                return color(i % 2);
+            })
+            .on("click", function (d) {
+                console.log("click")
+                d3.select(this).classed("fixed", d.fixed = true);
+            });
+    }
+var forceLayout;
+    function forceup() {
+        var force = d3.layout.force()
+            .nodes(nodes)
+            .gravity(0.05)
+            .friction(0.6)
+            .charge(0)
+            .size([width, height])
+            .start();
+        forceLayout = force;
+        var drag = force.drag().on("dragend", dragstart);
+
+        force.on("tick", function () {
+            var q = d3.geom.quadtree(nodes);
+            var i = 0;
+            var n = nodes.length;
+
+            while (++i < n) {
+                q.visit(collide(nodes[i]));
+            }
+
+            svg.selectAll("circle")
+                .attr("cx", function (d) { return d.x; })
+                .attr("cy", function (d) { return d.y; });
+        });
+
+        d3.selectAll("circle")
+            .on("dblclick", dblclick)
+            .call(drag);
+    }
+
+    function reset() {
+        svg.selectAll("*").remove();
+        nodesCopy =  [{"radius":53.32617499186609,"id":1},{"radius":64.84728247370347,"id":2},{"radius":57.711116628876255,"id":3},{"radius":51.68448051769095,"id":4},{"radius":44.43690375408485,"id":5},{"radius":28.24037000122536,"id":6},{"radius":69.80625687794407,"id":7},{"radius":31.17397903167372,"id":8},{"radius":28.806758988671714,"id":9},{"radius":40.098682831558634,"id":10},{"radius":20.65836484124755,"id":11},{"radius":52.89208982548851,"id":12},{"radius":26.74078177789924,"id":13},{"radius":52.81542169082984,"id":14},{"radius":67.4636603513773,"id":15},{"radius":55.05302273514476,"id":16},{"radius":54.72590107115092,"id":17},{"radius":57.282760475128796,"id":18},{"radius":33.865004776784474,"id":19},{"radius":28.901305727993403,"id":20}];
+
+        nodes = $.extend(true, [], nodesCopy);
+        packup();
+        forceup();
+    }
+    function addNode() {
+        svg.selectAll("*").remove();
+        nodesCopy.push({"radius":50});
+        nodes = $.extend(true, [], nodesCopy);
+//        svg.selectAll(".node")
+//            .data(packLaout.nodes({"children": nodes})
+//                .filter(function (d) { return !d.children; }))
+//            .enter().append("circle")
+//            .attr("r", function (d) { return d.radius; })
+//            .attr("cx", function (d) { return d.x; })
+//            .attr("cy", function (d) { return d.y; })
+//            .style("fill", function (d, i) {
+//                return color(i % 2);
+//            });
+//        forceLayout.nodes(nodes);
+
+        packup();
+        forceup();
+    }
+    function delNodes() {
+        svg.selectAll("*").remove();
+        nodesCopy.push({"radius":50});
+        nodes = $.extend(true, [], nodesCopy);
+    }
+    packup();
+    forceup();
+
+</script>
+</body>
+</html>

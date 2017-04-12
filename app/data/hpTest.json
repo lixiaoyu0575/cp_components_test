@@ -1,0 +1,73 @@
+{
+  "acronym": "A",
+  "children_length": 6,
+  "value": 60,
+  "children": [
+    {
+      "acronym": "B",
+      "children_length": 5,
+      "value": 20,
+      "children": [
+        {"acronym": "A", "children_length": 0,
+          "value": 3},
+        {"acronym": "B", "children_length": 0,
+          "value": 7},
+        {"acronym": "A + B", "children_length": 0,
+          "value": 2},
+        {"acronym": "C", "children_length": 0,
+          "value": 6},
+        {"acronym": "B + C", "children_length": 0,
+          "value": 2}
+      ]
+    },
+    {
+      "acronym": "D",
+      "children_length": 3,
+      "value": 12,
+      "children": [
+        {"acronym": "A", "children_length": 0,
+          "value": 2},
+        {"acronym": "C", "children_length": 0,
+          "value": 5},
+        {"acronym": "D", "children_length": 0,
+          "value": 5}
+      ]
+    },
+    {
+      "acronym": "C",
+      "children_length": 5,
+      "value": 20,
+      "children": [
+        {"acronym": "A", "children_length": 0,
+          "value": 5},
+        {"acronym": "C", "children_length": 0,
+          "value": 6},
+        {"acronym": "A + C", "children_length": 0,
+          "value": 4},
+        {"acronym": "B", "children_length": 0,
+          "value": 3},
+        {"acronym": "D", "children_length": 0,
+          "value": 2}
+      ]
+    },
+    {"acronym": "E", "children_length": 1,
+      "value": 2,
+      "children": [
+        {"acronym": "F", "children_length": 0,
+          "value": 2}
+      ]
+    },
+    {"acronym": "F", "children_length": 1,
+      "value": 6,
+      "children": [
+        {"acronym": "E", "children_length": 0,
+          "value": 6}
+      ]},
+    {"acronym": "G", "children_length": 1,
+      "value": 4,
+      "children": [
+        {"acronym": "G", "children_length": 0,
+          "value": 4}
+      ]}
+  ]
+}

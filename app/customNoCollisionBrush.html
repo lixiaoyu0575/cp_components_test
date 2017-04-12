@@ -39,6 +39,7 @@
 
 </style>
 <body>
+<a href="/">back</a>
 <script src="./libs/d3.v3.min.js"></script>
 <script>
     var xBrushMargin = {top: 700, right: 40, bottom: 50, left: 40},
@@ -200,13 +201,11 @@ console.log(extent1);
         function brushend() {
             //add a new brush as needed
             var lastBrushExtent = brushes[brushes.length - 1].brush.extent();
-            var toEmpty = 0;
             console.log(brushes);
-            var currentTime = (new Date()).valueOf();
-            if (currentTime - lastBrushTime < 500) {
-                toEmpty = 1;
-                console.log("!!!!!!!!!!!!!!!!!!!!!");
-                brushes = [];
+//            var currentTime = (new Date()).valueOf();
+//            if (currentTime - lastBrushTime < 500) {
+//                console.log("!!!!!!!!!!!!!!!!!!!!!");
+//                brushes = [];
 //                brush.clear();
 //                brushes.pop();
 //                console.log(brushes);
@@ -241,13 +240,13 @@ console.log(extent1);
 //                    }
 //
 //                })
-            }
-            lastBrushTime = currentTime;
+//            }
+//            lastBrushTime = currentTime;
             console.log(lastBrushExtent[0].getTime())
             console.log(lastBrushExtent[1].getTime())
             if (lastBrushExtent[0].getTime() != lastBrushExtent[1].getTime())
-                newBrush();
-            console.log((new Date()).valueOf());
+                 newBrush();
+//            console.log((new Date()).valueOf());
 //            console.log(d3.selectAll(".extent"));
 //            d3.selectAll(".extent").on("click",function () {
 //                console.log("clicked!");
@@ -255,28 +254,21 @@ console.log(extent1);
 //                console.log("dragged");
 //            });
             //keep track of current loc for comparison later
-//            if (toEmpty === 1) {
-//                brushes[0].brush.extent([0, 0]);
-//            }
+
             brush.extent.start = brush.extent();
-            console.log(brushes);
-            if (toEmpty === 0) {
+//            console.log(brushes)
+//            if (brushes !== []) {
                 update();
-            } else {
-                emptyBrushes();
-            }
+//            } else {
+//                emptyBrushes();
+//            }
         }
     }
     function emptyBrushes() {
         console.log(brushes);
         gBrushes
-            .selectAll('.brush-add')
+            .selectAll('.brush')
             .remove();
-//        gBrushes.selectAll('.extent')
-//            .attr("width", 0);
-        brushes =  [];
-        newBrush();
-//        update();
     }
     function update() {
         var gBrush = gBrushes
@@ -311,7 +303,6 @@ console.log(extent1);
                         brush.extent()[0].getTime() === brush.extent()[1].getTime()
                             ? 'all' : 'none';
                     });
-
             })
 
         gBrush.selectAll('rect')
