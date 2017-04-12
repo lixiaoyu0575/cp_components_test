@@ -12,7 +12,7 @@ var express = require("express"),
 
 // app.use(compression({level:9}));//express compression to support gzip
 
-app.set("port", process.env.PORT || 3010);
+app.set("port", process.env.PORT || 3306);
 app.set("views", __dirname + "/views");
 app.engine(".html", ejs.__express);
 app.set("view engine", "html"); //替换文件扩展名ejs为html
