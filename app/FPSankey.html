@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>SANKEY Experiment</title>
+<style>
+
+    .node rect {
+        cursor: move;
+        fill-opacity: .9;
+        shape-rendering: crispEdges;
+    }
+
+    .node text {
+        pointer-events: none;
+        text-shadow: 0 1px 0 #fff;
+    }
+
+    .link {
+        fill: none;
+        stroke: #000;
+        stroke-opacity: .2;
+    }
+
+    .link:hover {
+        stroke-opacity: .8;
+    }
+
+</style>
+<body>
+<a href="/">back</a>
+
+<p id="chart">
+
+    <script src="./libs/d3.v3.min.js"></script>
+    <script src="./libs/sankey.js"></script>
+    <script>
+        "ues strict";
+
+//        console.log(pNodes);
+//        console.log(pLinks);
+//        console.log(patterns);
+//        console.log(stageN);
+
+        var units = "Widgets";
+
+        var margin = {top: 10, right: 10, bottom: 10, left: 10},
+            width = 1000 - margin.left - margin.right,
+            height = 800 - margin.top - margin.bottom;
+
+        var formatNumber = d3.format(",.0f"),    // zero decimal places
+            format = function(d) { return formatNumber(d) + " " + units; },
+            color = d3.scale.category20(),
+            nameArr = ["A", "B", "C", "D", "E", "F", "G", "A + B", "B + C", "A + C"];
+
+        // append the svg canvas to the page
+        var svg = d3.select("#chart").append("svg")
+            .attr("width", width + margin.left + margin.right + 200)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform",
+                "translate(" + margin.left + "," + margin.top + ")");
+
+        // Set the sankey diagram properties
+        var sankey = d3.sankey()
+            .nodeWidth(3)
+            .nodePadding(4)
+            .size([width, height]);
+
+        var path = sankey.link();
+
+        // load the data
+        d3.json("./data/Frequent_Pattern_3-5_0.5.json", function(error, graph) {
+            console.log(graph);
+            var test = graph.pattern,
+                pattern_3 = [],
+                pNodes = [],
+                pLinks = [],
+                stageN = [[],[],[]],
+                stageNV = [[],[],[]],
+                patterns = [],
+                i,
+                j;
+            console.log(test);
+            for (i = 0;i < test.length;i++) {
+                if (test[i][0].length === 3){
+                    console.log(test[i][0]);
+                    pattern_3.push(test[i])
+                }
+            }
+            console.log(pattern_3);
+            for (i = 0;i < pattern_3.length;i++){
+                var tempN = pattern_3[i][0],
+                    tempSA = {
+                        pattern: [],
+                        sup: 0
+                    },
+                    tempString;
+                for(j = 0;j < tempN.length;j++){
+                    tempString = tempN[j][0];
+                    for(k = 1;k < tempN[j].length;k++){
+                        tempString += " & " + tempN[j][k];
+                    }
+                    tempSA.pattern.push(tempString);
+                    if (stageN[j].indexOf(tempString) === -1 || j === tempN.length - 1) {
+                        stageN[j].push(tempString);
+                        stageNV[j].push(pattern_3[i][1])
+                    }
+//                tempSA.push(tempString);
+                }
+
+
+                tempSA.sup = pattern_3[i][1];
+                patterns.push(tempSA);
+//            if (tempN[0])
+            }
+            var stageNodes = [[],[],[]];
+            for (i = 0;i < 3;i++){
+                for (j = 0;j< stageNV[i].length;j++){
+                    stageNodes[i].push({
+                        "name": stageN[i][j],
+                        "value": stageNV[i][j]
+                    })
+                }
+            }
+            console.log(stageN);
+            var count = 0,
+                sortedNodesString = [[],[],[]];
+            for (i = 0;i < stageNodes.length;i++){
+//            if (i !== 2) {
+//                stageNodes[i].sort(function (a, b) {
+//                    return b.value - a.value;
+//                });
+//            }
+                for (j = 0;j < stageNodes[i].length;j++){
+                    pNodes.push({
+                        "index": count,
+                        "name": stageNodes[i][j].name,
+                        "value": stageNodes[i][j].value
+                    });
+                    sortedNodesString[i].push(stageNodes[i][j].name);
+                    count++;
+                }
+            }
+            for (i = 0;i < patterns.length;i++){
+                curPattern = patterns[i];
+                var link1 = {};
+                link1.source = sortedNodesString[0].indexOf(curPattern.pattern[0]);
+                link1.target = stageNodes[0].length + sortedNodesString[1].indexOf(curPattern.pattern[1]);
+                link1.value = (curPattern.sup - 200);
+                link1.patternIndex =  i + 1;
+                pLinks.push(link1);
+                var link2 = {};
+                link2.source = link1.target;
+                link2.target = stageNodes[0].length + stageNodes[1].length + i;
+                link2.value = (curPattern.sup - 200);
+                link2.patternIndex =  i + 1;
+                pLinks.push(link2);
+            }
+            var patternSankeyData = {
+                "nodes": pNodes,
+                "links": pLinks
+            };
+            console.log(patternSankeyData);
+
+            //-------------------------- preprocess data----------------------------------------------------//
+
+            graph = patternSankeyData;
+            sankey
+                .nodes(graph.nodes)
+                .links(graph.links)
+                .layout(32);
+console.log(graph);
+// add in the links
+            var link = svg.append("g").selectAll(".link")
+                .data(graph.links)
+                .enter().append("path")
+                .attr("class", "link")
+                .attr("d", path)
+                .style("stroke-width", function(d) { return Math.max(1, d.dy); })
+                .sort(function(a, b) { return b.dy - a.dy; })
+                .style("stroke", function (d, i) {
+                    return color(d.patternIndex);
+                });
+
+// add the link titles
+            link.append("title")
+                .text(function(d) {
+                    return d.source.name + " → " +
+                        d.target.name + "\n" + format(d.value); });
+
+// add in the nodes
+            var node = svg.append("g").selectAll(".node")
+                .data(graph.nodes)
+                .enter().append("g")
+                .attr("class", "node")
+                .attr("transform", function(d) {
+                    return "translate(" + d.x + "," + d.y + ")"; })
+                .call(d3.behavior.drag()
+                    .origin(function(d) { return d; })
+                    .on("dragstart", function() {
+                        this.parentNode.appendChild(this); })
+                    .on("drag", dragmove));
+
+// add the rectangles for the nodes
+            node.append("rect")
+                .attr("height", function(d) { return d.dy; })
+                .attr("width", function (d) {
+//                    console.log(d);
+//                    console.log(d.value);
+                    if (d.sourceLinks.length === 0) {
+                        return sankey.nodeWidth() * (d.value - 50)/ 10
+                    }
+                    return sankey.nodeWidth();
+                })
+                .style("fill", function(d) {
+//                    return color(nameArr.indexOf(d.id));
+                    return d.color = color(d.name.replace(/ .*/, ""));
+                })
+                .style("stroke", function(d) {
+                    return d3.rgb(d.color).darker(2); })
+                .append("title")
+                .text(function(d) {
+                    return d.name + "\n" + format(d.value); });
+
+// add in the title for the nodes
+            node.append("text")
+                .attr("x", -6)
+                .attr("y", function(d) { return d.dy / 2; })
+                .attr("dy", ".35em")
+                .attr("text-anchor", "end")
+                .attr("transform", null)
+                .text(function(d) { return d.name; })
+                .filter(function(d) { return d.x < width / 2; })
+                .attr("x", 6 + sankey.nodeWidth())
+                .attr("text-anchor", "start");
+
+// the function for moving the nodes
+            function dragmove(d) {
+                d3.select(this).attr("transform",
+                    "translate(" + d.x + "," + (
+                        d.y = Math.max(0, Math.min(height - d.dy, d3.event.y))
+                    ) + ")");
+                sankey.relayout();
+                link.attr("d", path);
+            }
+        });
+
+    </script>
+
+</body>
+</html>

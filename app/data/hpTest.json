@@ -6,7 +6,7 @@
     {
       "acronym": "B",
       "children_length": 5,
-      "value": 20,
+      "value": 30,
       "children": [
         {"acronym": "A", "children_length": 0,
           "value": 3},

@@ -1,0 +1,8 @@
+{
+  "patterns": [
+    {
+      "pattern": [["A"], ["B"], ["A"]],
+      "support": 2
+    }
+  ]
+}

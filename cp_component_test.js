@@ -29,28 +29,28 @@ if (app.get("env") === "development") {
 
 // angular启动页
 app.get("/", function (req, res) {
-    //res.sendfile("medWeb1.0/index.html");
     res.sendfile("app/index.html");
 });
 app.get("/sankey", function (req, res) {
-  //res.sendfile("medWeb1.0/index.html");
     res.sendfile("app/sankey.html");
 });
+app.get("/FPSankey", function (req, res) {
+    res.sendfile("app/FPSankey.html");
+});
 app.get("/hierarchicalPatition", function (req, res) {
-    //res.sendfile("medWeb1.0/index.html");
     res.sendfile("app/hierarchicalPatition.html");
 });
 app.get("/brush", function (req, res) {
-    //res.sendfile("medWeb1.0/index.html");
     res.sendfile("app/brush.html");
 });
 app.get("/circlePacking", function (req, res) {
-    //res.sendfile("medWeb1.0/index.html");
     res.sendfile("app/circlePacking.html");
 });
 app.get("/customNoCollisionBrush", function (req, res) {
-    //res.sendfile("medWeb1.0/index.html");
     res.sendfile("app/customNoCollisionBrush.html");
+});
+app.get("/CPPatternVis", function (req, res) {
+    res.sendfile("app/CPPatternVis.html");
 });
 server.listen(app.get("port"), function () {
   console.log("Express server listening on port " + app.get("port"));

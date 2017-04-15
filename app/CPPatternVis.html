@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+    <link type="text/css" rel="stylesheet" href="./css/hPartition.css"/>
+    <script type="text/javascript" src="./libs/d3.v3.min.js"></script>
+
+    <style type="text/css">
+
+        .chart {
+            display: block;
+            margin: auto;
+            font-size: 11px;
+        }
+
+        rect {
+            stroke: #eee;
+            stroke-width: 1;
+            /*fill: #aaa;*/
+            fill-opacity: .8;
+        }
+
+        rect.parent {
+            cursor: pointer;
+            opacity: 0.6;
+            /*fill: steelblue;*/
+        }
+
+        text {
+            pointer-events: none;
+        }
+        .link {
+            fill: none;
+            stroke: steelblue;
+            stroke-opacity: .15;
+        }
+
+        .link:hover {
+            stroke-opacity: .8;
+        }
+
+    </style>
+</head>
+
+<body>
+<div id="body">
+    <a href="/">back</a>
+    <!--<div id="footer">-->
+        <!--d3.layout.partition-->
+        <!--<div class="hint">click or option-click to descend or ascend</div>-->
+    <!--</div>-->
+</div>
+
+<script type="text/javascript">
+
+    var svgWidth = 1000,
+        svgHeight = 800,
+        w = 200,
+        h = 800,
+        x = d3.scale.linear().range([0, w]),
+        y = d3.scale.linear().range([0, h]),
+        color = d3.scale.category10(),
+        nameArray = [];
+
+    var svg = d3.select("#body").append("div")
+        .attr("class", "chart")
+        .style("width", svgWidth + "px")
+        .style("height", svgHeight + "px")
+        .append("svg:svg")
+        .attr("width", svgWidth)
+        .attr("height", svgHeight);
+
+    var partition = d3.layout.partition()
+        .value(function(d) {
+            console.log(d);
+            return d.support; });
+
+//    d3.json("./data/seplag.json", function(root) {
+    d3.json("./data/Frequent_Pattern_3-5_0.5.json", function(error, graph) {
+        console.log(graph);
+        var test = graph.pattern,
+            pattern_3 = [],
+            pNodes = [],
+            pLinks = [],
+            stageN = [[], [], []],
+            stageNV = [[], [], []],
+            patterns = [],
+            partitions,
+            startX = 0,
+            isLastDay = 0,
+            lastDay,
+            vis,
+            i,
+            j;
+        console.log(test);
+        var count = 0
+        for (i = 0; i < test.length; i++) {
+            if (test[i][0].length === 3) {
+                console.log(test[i][0]);
+                lastDay = test[i][0][2];
+                lastDay[lastDay.length - 1] += "-" + count;
+                count++;
+                pattern_3.push(test[i])
+            }
+        }
+        console.log(pattern_3);
+        partitions = getTrees(pattern_3);
+        console.log(partitions);
+        var partitionsSvg = [];
+        for (i = 0;i < partitions.length; i++){
+            vis = svg.append("g");
+            if (i === partitions.length - 1) {
+                isLastDay = 1;
+            }
+            drawPartitions(vis, startX, partitions[i], isLastDay);
+            partitionsSvg.push(vis);
+            startX += 400;
+        }
+        var linkG = svg.append("g");
+        drawLinks(pattern_3);
+        function drawLinks(patterns) {
+            var links = [],
+                links2 = [],
+                i, j ,k;
+            console.log(partitionsSvg);
+            partitionsSvg[2].selectAll("rect").filter(function (d) {
+                return !d.children;
+            }).each(function (d) {
+                console.log(d);
+                var link = {},
+                    link2 = {},
+                    temp = d.name.split("-"),
+                    index = temp[1],
+                    lastName = temp[0],
+                    tempX2,
+                    tempX1,
+                    pattern = patterns[index];
+                link.index = link2.index = index;
+                link.targetX = d.rectX;
+                link.targetY = d.rectY;
+                link.width = d.height;
+                partitionsSvg[1].selectAll("rect").filter(function (d) {
+                    if (!!d.id) {
+                        tempX2 = d.children[0].rectX;
+                    }
+                    return d.name === getLastOneInArray(pattern[0][1]) && !d.children && d.depth === pattern[0][1].length;
+                }).each(function (d) {
+                    console.log(d);
+                    link.sourceX = d.rectX + d.width;
+                    link.sourceY = d.rectY;
+                    link2.targetX = tempX2;
+                    link2.targetY = d.rectY;
+                    link2.width = link.width;
+                    d.rectY += link.width;
+                    links.push(link);
+                    console.log(link);
+                });
+                partitionsSvg[0].selectAll("rect").filter(function (d) {
+//                    console.log(d);
+                    return d.name === getLastOneInArray(pattern[0][0]) && !d.children && d.depth === pattern[0][0].length;
+                }).each(function (d) {
+//                    console.log(tempX1);
+                    link2.sourceX = d.rectX + d.width;
+                    link2.sourceY = d.rectY;
+                    d.rectY += link2.width;
+                    links.push(link2);
+                    console.log(link2);
+                });
+
+            });
+//            drawPaths(links, links2);
+            linkG.selectAll("path")
+                .data(links)
+                .enter().append("path")
+                .attr("d", function (link) {
+                    var x0 = link.sourceX,
+                        y0 = link.sourceY + link.width / 2,
+                        x1 = link.targetX,
+                        y1 = link.targetY + link.width / 2,
+                        xi = interpolateNumber(x0, x1),
+                        curvature = 0.5,
+                        pathVal = "M" + x0 + "," + y0 +
+                            "C" + xi(curvature) + "," + y0 +
+                            " " + xi(1-curvature) + "," + y1 +
+                            " " + x1 + "," + y1;
+                    console.log(pathVal);
+                    return pathVal;
+                })
+                .attr("stroke-width", function (link) {
+                    return link.width;
+                })
+                .attr("class", "link")
+                .on("mouseover", function (d) {
+                    console.log(d);
+                    var index = d.index;
+                    linkG.selectAll(".link").filter(function (l) {
+                        return l.index === index;
+                    }).each(function (l) {
+                        d3.select(this).style("stroke-opacity", 0.8);
+                    })
+                })
+                .on("mouseleave", function (d) {
+                    var index = d.index;
+                    linkG.selectAll(".link").filter(function (l) {
+                        return l.index === index;
+                    }).each(function (l) {
+                        d3.select(this).style("stroke-opacity", 0.15);
+                    })
+                });
+            console.log(links);
+            function getLastOneInArray(array) {
+                return array[array.length - 1]
+            }
+            function drawPaths(links, links2) {
+                var i;
+                for (i = 0;i <links.length;i++) {
+                    drawLink(links[i]);
+                    drawLink(links2[i]);
+                }
+                function drawLink(link) {
+                    var x0 = link.sourceX,
+                        y0 = link.sourceY + link.width / 2,
+                        x1 = link.targetX,
+                        y1 = link.targetY + link.width / 2,
+                        xi = interpolateNumber(x0, x1),
+                        curvature = 0.5,
+                        pathVal = "M" + x0 + "," + y0 +
+                            "C" + xi(curvature) + "," + y0 +
+                            " " + xi(1-curvature) + "," + y1 +
+                            " " + x1 + "," + y1;
+                    console.log(pathVal);
+                    linkG.append("path")
+                        .attr("d", pathVal)
+                        .attr("stroke-width", link.width)
+                        .attr("class", "link");
+                }
+            }
+            function interpolateNumber(a,b) {
+                // console.log(a);
+                // console.log(b);
+                // a = +a, b = +b;
+                return function(t) {
+                    return a * (1 - t) + b * t;
+                };
+            }
+        }
+//        root = partitions[2];
+//        vis = svg.append("g");
+//        drawPartitions(vis, 800, root);
+        function drawPartitions(vis, startX, root, isLastDay) {
+            var g = vis.selectAll("g")
+                .data(partition.nodes(root))
+                .enter().append("g")
+//                .attr("transform", function(d) { return "translate(" + (x(d.y) + startX) + "," + y(d.x) + ")"; });
+//            .on("click", click);
+
+            var kx = w / root.dx,
+                ky = h / 1;
+
+            g.append("svg:rect")
+                .attr("width", function (d) {
+                    var width;
+                    console.log(d);
+                    if (!d.name) {
+                        return 0;
+                    }
+                    if (isLastDay === 1) {
+                        if (!d.children) {
+                            if (d.level === 0) {
+                                width = d.support - 240 + root.dy * kx;
+                                d.width = width;
+                                return width;
+                            }
+                            return d.width = (d.support - 240);
+                        }
+                        console.log(d.value);
+                    }
+                    return d.width = root.dy * kx;
+                })
+                .attr("height", function(d) {  return d.height = d.dx * ky; })
+                .attr("class", function(d) { return d.children ? "parent" : "child"; })
+                .style("fill", function (d, i) {
+//                console.log(nameArr.indexOf(d.acronym))
+                    return color(nameArray.indexOf(d.name));
+                })
+                .attr("x", function (d) {
+                    d.rectX = x(d.y) + startX;
+                    return x(d.y) + startX;
+                })
+                .attr("y", function (d) {
+                    d.rectY = y(d.x);
+                    return y(d.x);
+                });
+//            g.selectAll("rect")
+//                .attr("width", function (d, i) {
+////                    console.log(d);
+//                });
+
+            g.append("svg:text")
+                .attr("transform", transform)
+                .attr("dy", ".35em")
+                .style("opacity", function(d) {
+                    return 1;
+//                    return d.dx * ky > 12 ? 1 : 0;
+                })
+                .attr("x", function (d) {
+                    return x(d.y) + startX;
+                })
+                .attr("y", function (d) {
+                    return y(d.x);
+                })
+                .text(function(d) {
+                    console.log(d.name);
+                    if (!!d.name) {
+                        return d.name.split("-")[0];
+                    }
+                });
+
+            function transform(d) {
+                return "translate(8," + d.dx * ky / 2 + ")";
+            }
+        }
+
+
+
+
+        for (i = 0; i < pattern_3.length; i++) {
+            var tempN = pattern_3[i][0],
+                tempSA = {
+                    pattern: [],
+                    sup: 0
+                },
+                tempString;
+            for (j = 0; j < tempN.length; j++) {
+                tempString = tempN[j][0];
+                for (k = 1; k < tempN[j].length; k++) {
+                    tempString += " & " + tempN[j][k];
+                }
+                tempSA.pattern.push(tempString);
+                if (stageN[j].indexOf(tempString) === -1 || j === tempN.length - 1) {
+                    stageN[j].push(tempString);
+                    stageNV[j].push(pattern_3[i][1])
+                }
+//                tempSA.push(tempString);
+            }
+
+
+            tempSA.sup = pattern_3[i][1];
+            patterns.push(tempSA);
+//            if (tempN[0])
+        }
+        var stageNodes = [[], [], []];
+        for (i = 0; i < 3; i++) {
+            for (j = 0; j < stageNV[i].length; j++) {
+                stageNodes[i].push({
+                    "name": stageN[i][j],
+                    "value": stageNV[i][j]
+                })
+            }
+        }
+        console.log(stageN);
+        count = 0,
+            sortedNodesString = [[], [], []];
+        for (i = 0; i < stageNodes.length; i++) {
+//            if (i !== 2) {
+//                stageNodes[i].sort(function (a, b) {
+//                    return b.value - a.value;
+//                });
+//            }
+            for (j = 0; j < stageNodes[i].length; j++) {
+                pNodes.push({
+                    "index": count,
+                    "name": stageNodes[i][j].name,
+                    "value": stageNodes[i][j].value
+                });
+                sortedNodesString[i].push(stageNodes[i][j].name);
+                count++;
+            }
+        }
+        for (i = 0; i < patterns.length; i++) {
+            curPattern = patterns[i];
+            var link1 = {};
+            link1.source = sortedNodesString[0].indexOf(curPattern.pattern[0]);
+            link1.target = stageNodes[0].length + sortedNodesString[1].indexOf(curPattern.pattern[1]);
+            link1.value = (curPattern.sup - 200);
+            link1.patternIndex = i + 1;
+            pLinks.push(link1);
+            var link2 = {};
+            link2.source = link1.target;
+            link2.target = stageNodes[0].length + stageNodes[1].length + i;
+            link2.value = (curPattern.sup - 200);
+            link2.patternIndex = i + 1;
+            pLinks.push(link2);
+        }
+        var patternSankeyData = {
+            "nodes": pNodes,
+            "links": pLinks
+        };
+        console.log(patternSankeyData);
+    });
+    function getTrees(patterns) {
+        var curDayEvents = [],
+            curDayPatternEvents,
+            forest = [],
+            eventIdex,
+            isLastDay = 0,
+            i, j, k ;
+        for (i = 0;i < patterns[0][0].length;i++) {
+            var tree = {
+                "id": i,
+                "pid": 0,
+                "level": 0
+            };
+            if (i === patterns[0][0].length - 1) {
+                isLastDay = 1;
+            }
+            for (j = 0;j < patterns.length; j++) {// get event dic to sort
+                var eventsDic = [],
+                    eventsNum = [];
+                patterns.sort(function (a, b) {
+                    return b[0][i].length - a[0][i].length;
+                });
+                curDayPatternEvents = patterns[j][0][i];
+                for (k = 0;k < curDayPatternEvents.length;k++) {
+                    eventIdex = eventsDic.indexOf(curDayPatternEvents[k]);
+                    if (eventIdex === -1) {
+                        eventsNum.push(1);
+                        eventsDic.push(curDayPatternEvents[k]);
+                    } else {
+                        eventsNum[eventIdex]++;
+                    }
+                    if (nameArray.indexOf(curDayPatternEvents[k]) === -1) {
+                        nameArray.push(curDayPatternEvents[k]);
+                    }
+                }
+            }
+            for (j = 0;j < patterns.length; j++) {//construct tree
+                curDayPatternEvents = patterns[j][0][i];
+                curDayPatternEvents.sort(function (a, b) {
+                    return eventsNum[eventsDic.indexOf(b)] - eventsNum[eventsDic.indexOf(a)];
+                });
+                tree = addLeaf(curDayPatternEvents, patterns[j][1], tree, isLastDay);
+            }
+            console.log(tree);
+            forest.push(tree);
+        }
+        console.log(nameArray);
+        return forest;
+    }
+    function addLeaf(events, value, tree, isLastDay) {
+        var obj = tree,
+            isTheLast = 0,
+            i,
+            index;
+        for (i = 0;i < events.length - 1;i++) {
+            isTheLast = 0;
+            if (!obj.children) {
+                obj.children = [{
+                    "name": events[i]
+                }];
+                obj = obj.children[0];
+            } else if(getSameNameChildIndex(events[i], obj.children, isTheLast) > -1) {
+                index = getSameNameChildIndex(events[i], obj.children, isTheLast);
+                obj = obj.children[index];
+//                continue;
+            } else {
+                obj.children.push({
+                    "name": events[i]
+                });
+                obj = obj.children[obj.children.length - 1];
+            }
+        }
+        isTheLast = 1;
+        if (!obj.children) {
+            obj.children = [{
+                "name": events[i],
+                "support": value,
+                "level": i
+            }];
+        } else if (isLastDay === 1) {
+            obj.children.push({
+                "name": events[i],
+                "support": value,
+                "level": i
+            });
+        } else if(getSameNameChildIndex(events[i], obj.children, isTheLast) > -1) {
+            index = getSameNameChildIndex(events[i], obj.children, isTheLast);
+            obj.children[index].support += value;
+        } else {
+            obj.children.push({
+                "name": events[i],
+                "support": value,
+                "level": i
+            });
+        }
+        return tree;
+    }
+    function getSameNameChildIndex(eventName, objArray, isTheLast) {
+        var i;
+        for (i = 0;i < objArray.length;i++) {
+            if (objArray[i].name === eventName) {
+                if (isTheLast === 0 && !!objArray[i].children){
+                    return i
+                }
+                if (isTheLast === 1 && !objArray[i].children){
+                    return i
+                }
+            }
+        }
+        return -1;
+    }
+
+</script>
+</body>
+</html>
