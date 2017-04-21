@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>SANKEY Experiment</title>
+<style>
+
+    rect {
+        /*cursor: move;*/
+        fill-opacity: .6;
+        /*shape-rendering: crispEdges;*/
+        stroke-width: .5;
+        stroke: black;
+    }
+
+    .node text {
+        pointer-events: none;
+        text-shadow: 0 1px 0 #fff;
+    }
+
+    .link {
+        fill: none;
+        stroke: #000;
+        stroke-opacity: .2;
+    }
+
+    .link:hover {
+        stroke-opacity: .5;
+    }
+
+</style>
+<body>
+<a href="/">back</a>
+
+<p id="chart">
+
+    <script src="./libs/d3.v3.min.js"></script>
+    <script>
+
+        var units = "Widgets";
+
+        var margin = {top: 10, right: 10, bottom: 10, left: 10},
+            width = 1500 - margin.left - margin.right,
+            height = 3000 - margin.top - margin.bottom;
+
+        var formatNumber = d3.format(",.0f"),    // zero decimal places
+            format = function(d) { return formatNumber(d) + " " + units; },
+            color = d3.scale.category20();
+
+        // append the svg canvas to the page
+        var svg = d3.select("#chart").append("svg");
+            svg.attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform",
+                "translate(" + margin.left + "," + margin.top + ")");
+        var nodesName = ["消化系统药物", "循环系统药物", "内分泌系统药物", "眼科用药", "水、电解质及酸碱平衡用药", "血液系统药物", "皮肤科用药", "抗生素", "呼吸系统药物", "其他用药", "泌尿系统药物", "参麦", "神经系统药物", "抗变态反应药物", "生脉", "抗病毒颗粒", "抗肿瘤药物", "诺和针", "瑞舒伐他汀(可定)", "注射用水(玻)", "坦索罗辛（哈乐）", "谷胱甘肽还原性(绿汀诺)", "清热解毒", "头孢地嗪（康丽能）", "三九感冒灵冲", "依折麦布(益适纯)", "百令胶囊", "痰热清", "金水宝胶囊", "维生素类药物", "左甲状腺素（优甲乐）", "止咳桃花散", "诺和笔", "头孢地嗪（康丽能）［—］", "混合糖电解质(新海能)", "替比夫定(素比伏)", "参芪扶正", "多酶", "麻醉药及其辅助药物", "妇产科用药", "四联活菌（思连康）", "羚羊感冒口服液", "黄龙止咳颗粒", "复方红衣补血口服液", "贝伐珠单抗(安维汀)", "谷胱甘肽还原性(阿拓莫兰)", "开塞露", "重组人促红素(济脉欣)"];
+        // Set the sankey diagram properties
+//        var sankey = d3.sankey()
+//            .nodeWidth(4)
+//            .nodePadding(2)
+//            .size([width, height]);
+//
+//        var path = sankey.link();
+
+        // load the data
+        //        d3.json("./data/sankey-formatted2.json", function(error, graph) {
+        d3.json("./data/output2front_sequences_med_0.1.json", function(error, graph) {
+            console.log(graph);
+            var rectsData = [],
+                maxLength = 12,
+                padding = 1,
+                sequenceNum = graph.length;
+            for (var i = 0;i < sequenceNum;i++) {
+                for(var j = 0;j < graph[i][0].length;j++) {
+                    if (graph[i][0].length > maxLength) {
+                        maxLength = graph[i][0].length;
+                    }
+                    var temp = graph[i][0][j].split(",");
+                    var index2 = temp[temp.length - 1] -1;
+                    var rect = {
+                        "index1": i,
+                        "index2": index2,
+                        "name": graph[i][0][j],
+                        "value": graph[i][1]
+                    };
+                    rect.isComposite = graph[i][0][j].split(",").length > 2 ? 1 : 0;
+                    rectsData.push(rect);
+                }
+            }
+            console.log(maxLength);
+            svg.append("g").selectAll(".node")
+                .data(rectsData)
+                .enter()
+                .append("rect")
+                .attr("x", function (d) {
+//                    console.log(d);
+                    return width / maxLength * d.index2;
+                })
+                .attr("y", function (d) {
+                    return height / sequenceNum * d.index1;
+                })
+                .attr("width", function (d) {
+                    return width / maxLength - padding;
+                })
+                .attr("height", function (d) {
+                    return height / sequenceNum - padding;
+                })
+                .attr("fill", function (d) {
+                    if (d.isComposite === 0) {
+                        console.log(d.name.split(",")[0]);
+                        console.log(nodesName.indexOf(d.name.split(",")[0]));
+                        return color(nodesName.indexOf(d.name.split(",")[0]) % 20)
+                    }else {
+                        return "#fff";
+                    }
+                });
+            svg.append("g").selectAll(".node")
+                .data(rectsData)
+                .enter()
+                .append("text")
+                .attr("x", function (d) {
+                    console.log(d);
+                    return width / maxLength * d.index2 - (width / maxLength - padding);
+                })
+                .attr("y", function (d) {
+                    return height / sequenceNum * d.index1;
+                })
+                .attr("dx", function (d) {
+                    return width / maxLength - padding;
+                })
+                .attr("dy", function (d) {
+                    return height / sequenceNum - padding;
+                })
+                .text(function (d) {
+                    return d.name
+                })
+                .style("font-size", 10);
+//            svg.data(graph)
+//                .selectAll("g")
+//                .enter()
+//                .append("rect")
+//                .attr("x", function (d) {
+//                    console.log(d);
+//                })
+        });
+
+    </script>
+
+</body>
+</html>

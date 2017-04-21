@@ -37,8 +37,8 @@
         var units = "Widgets";
 
         var margin = {top: 10, right: 10, bottom: 10, left: 10},
-            width = 700 - margin.left - margin.right,
-            height = 800 - margin.top - margin.bottom;
+            width = 1500 - margin.left - margin.right,
+            height = 900 - margin.top - margin.bottom;
 
         var formatNumber = d3.format(",.0f"),    // zero decimal places
             format = function(d) { return formatNumber(d) + " " + units; },
@@ -54,19 +54,20 @@
 
         // Set the sankey diagram properties
         var sankey = d3.sankey()
-            .nodeWidth(36)
-            .nodePadding(40)
+            .nodeWidth(4)
+            .nodePadding(2)
             .size([width, height]);
 
         var path = sankey.link();
 
         // load the data
-        d3.json("./data/sankey-formatted2.json", function(error, graph) {
+//        d3.json("./data/sankey-formatted2.json", function(error, graph) {
+        d3.json("./data/output2front.json", function(error, graph) {
 
             sankey
                 .nodes(graph.nodes)
                 .links(graph.links)
-                .layout(32);
+                .layout(0);
 console.log(graph);
 // add in the links
             var link = svg.append("g").selectAll(".link")
