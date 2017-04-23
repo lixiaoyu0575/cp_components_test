@@ -52,14 +52,17 @@ app.get("/customNoCollisionBrush", function (req, res) {
 app.get("/CPPatternVis", function (req, res) {
     res.sendfile("app/CPPatternVis.html");
 });
-app.get("/overview_medication_0.05", function (req, res) {
-    res.sendfile("app/overview_medication_0.05.html");
+app.get("/overview_medication_0.15", function (req, res) {
+    res.sendfile("app/overview_medication_0.15.html");
 });
-app.get("/overview_medication_0.1", function (req, res) {
-    res.sendfile("app/overview_medication_0.1.html");
+app.get("/overview_medication_new_0.15", function (req, res) {
+    res.sendfile("app/overview_medication_new_0.15.html");
 });
-app.get("/overview_medication_0.2", function (req, res) {
-    res.sendfile("app/overview_medication_0.2.html");
+app.get("/overview_medication_new_kmeans_0.15", function (req, res) {
+    res.sendfile("app/overview_medication_new_kmeans_0.15.html");
+});
+app.get("/overview_ori", function (req, res) {
+    res.sendfile("app/overview_ori.html");
 });
 server.listen(app.get("port"), function () {
   console.log("Express server listening on port " + app.get("port"));
